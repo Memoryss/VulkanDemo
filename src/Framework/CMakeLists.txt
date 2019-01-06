@@ -1,0 +1,4 @@
+file(GLOB FRAMEWORK_SCRS "*.cpp")
+file(GLOB FRAMEWORD_HEADERS "*.h")
+
+add_library(Framework STATIC ${FRAMEWORK_SCRS} ${FRAMEWORD_HEADERS})
