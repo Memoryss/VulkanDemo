@@ -15,6 +15,10 @@ public:
 
 	bool InitWindow(HINSTANCE hInstance, WNDPROC wndProc);
 
+	void HandleMsgs(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+	void Update();
+
 	// resize windows size
 	void ResizeWindow(uint32_t width, uint32_t height);
 
@@ -27,8 +31,23 @@ private:
 	uint32_t m_width{ DEFAULE_WINDOW_WIDTH };
 	uint32_t m_height{ DEFAULE_WINDOW_HEIGHT };
 	std::string m_name{ DEFAULE_WINDOW_NAME };
-}
+};
 
-
-
+#define VULKAN_DEMO_MAIN()															\
+VulkanApplication *vulkanDemo = nullptr;											\
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)		\
+{																					\
+	if (vulkanDemo != nullptr)														\
+	{																				\
+		vulkanDemo->HandleMsgs(hWnd, uMsg, wParam, lParam);							\
+	}																				\
+																					\
+	return (DefWindowProc(hWnd, uMsg, wParam, lParam));								\
+}																					\
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)					\
+{																					\
+	vulkanDemo = new VulkanApplication();													\
+	vulkanDemo->InitWindow(hInstance, WndProc);										\
+	return 0;																		\
+}																					
 #endif

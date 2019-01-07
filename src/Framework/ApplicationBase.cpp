@@ -80,11 +80,36 @@ bool ApplicationBase::InitWindow(HINSTANCE hInstance, WNDPROC wndProc)
 		exit(1);
 	}
 
-	ShowWindow(m_hwnd);
+	ShowWindow(m_hwnd, SW_SHOW);
 	SetForegroundWindow(m_hwnd);
 	SetFocus(m_hwnd);
 
 	return true;
+}
+
+void ApplicationBase::HandleMsgs(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+	switch (uMsg)
+	{
+	case WM_CLOSE:
+		DestroyWindow(hWnd);
+		PostQuitMessage(0);
+		break;
+	case WM_PAINT:
+		ValidateRect(hWnd, NULL);
+		break;
+	case WM_KEYDOWN:
+		break;
+	case WM_KEYUP:
+		break;
+	default:
+		break;
+	}
+}
+
+void ApplicationBase::Update()
+{
+
 }
 
 void ApplicationBase::ResizeWindow(uint32_t width, uint32_t height)
