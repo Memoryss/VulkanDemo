@@ -14,7 +14,7 @@ ApplicationBase::~ApplicationBase()
 
 bool ApplicationBase::InitWindow(HINSTANCE hInstance, WNDPROC wndProc)
 {
-	m_instance = hInstance;
+	m_hInstance = hInstance;
 
 	// register window class
 	WNDCLASSEX wndClass;
@@ -87,6 +87,13 @@ bool ApplicationBase::InitWindow(HINSTANCE hInstance, WNDPROC wndProc)
 	return true;
 }
 
+bool ApplicationBase::InitVulkan()
+{
+	createVulkanInstance();
+	
+	return true;
+}
+
 void ApplicationBase::HandleMsgs(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg)
@@ -115,4 +122,44 @@ void ApplicationBase::Update()
 void ApplicationBase::ResizeWindow(uint32_t width, uint32_t height)
 {
 
+}
+
+void ApplicationBase::createVulkanInstance()
+{
+	uint32_t extCnt = 0;
+	vkEnumerateDeviceExtensionProperties(nullptr, nullptr, &extCnt, nullptr);
+	
+	std::vector<VkExtensionProperties> extProperties(extCnt);
+	vkEnumerateDeviceExtensionProperties(nullptr, nullptr, &extCnt, extProperties.data());
+	
+	std::cout << "Support Properties:";
+	for (const auto &extension : extProperties)
+	{
+		std::cout << extension.extensionName << std::endl;
+	}
+
+	VkApplicationInfo appInfo;
+	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	appInfo.pApplicationName = m_name.c_str();
+	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+	appInfo.pEngineName = m_name.c_str();
+	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+	appInfo.apiVersion = VK_API_VERSION_1_1;
+
+	VkInstanceCreateInfo instanceInfo;
+	instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	instanceInfo.pApplicationInfo = &appInfo;
+	instanceInfo.enabledExtensionCount = 0;
+
+	VkResult result = vkCreateInstance(&instanceInfo, nullptr, &m_vkInstance);
+	if (result != VK_SUCCESS)
+	{
+		std::cout << "Failed to create instance! res:" << result << std::endl;
+		exit(1);
+	}
+}
+
+void ApplicationBase::destoryVulkanInstance()
+{
+	vkDestroyInstance(m_vkInstance, nullptr);
 }

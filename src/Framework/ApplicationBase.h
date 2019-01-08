@@ -4,6 +4,8 @@
 // !windows only
 #include <windows.h>
 
+#include <vulkan/vulkan.hpp>
+
 #include "CommonDefs.h"
 
 class ApplicationBase
@@ -15,6 +17,8 @@ public:
 
 	bool InitWindow(HINSTANCE hInstance, WNDPROC wndProc);
 
+	bool InitVulkan();
+
 	void HandleMsgs(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	void Update();
@@ -23,14 +27,22 @@ public:
 	void ResizeWindow(uint32_t width, uint32_t height);
 
 private:
+	void createVulkanInstance();
+
+	void destoryVulkanInstance();
+
+private:
 	// window instance only in Windows! 
-	HINSTANCE m_instance{};
+	HINSTANCE m_hInstance{};
 	HWND m_hwnd{};
 
 	// window param
 	uint32_t m_width{ DEFAULE_WINDOW_WIDTH };
 	uint32_t m_height{ DEFAULE_WINDOW_HEIGHT };
 	std::string m_name{ DEFAULE_WINDOW_NAME };
+
+	// vulkan
+	VkInstance m_vkInstance;
 };
 
 #define VULKAN_DEMO_MAIN()															\
@@ -46,7 +58,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)		\
 }																					\
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)					\
 {																					\
-	vulkanDemo = new VulkanApplication();													\
+	vulkanDemo = new VulkanApplication();											\
 	vulkanDemo->InitWindow(hInstance, WndProc);										\
 	return 0;																		\
 }																					
