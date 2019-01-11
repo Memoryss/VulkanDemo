@@ -127,16 +127,26 @@ void ApplicationBase::ResizeWindow(uint32_t width, uint32_t height)
 void ApplicationBase::createVulkanInstance()
 {
 	uint32_t extCnt = 0;
-	vkEnumerateDeviceExtensionProperties(nullptr, nullptr, &extCnt, nullptr);
-	
-	std::vector<VkExtensionProperties> extProperties(extCnt);
-	vkEnumerateDeviceExtensionProperties(nullptr, nullptr, &extCnt, extProperties.data());
-	
-	std::cout << "Support Properties:";
-	for (const auto &extension : extProperties)
-	{
-		std::cout << extension.extensionName << std::endl;
-	}
+	VkResult result;
+	// take first physical device;
+	VkPhysicalDevice temp;
+	vkEnumerateDeviceExtensionProperties(temp, nullptr, &extCnt, nullptr);
+
+// 	uint32_t gpuCnt = 1;
+// 	result = vkEnumeratePhysicalDevices(m_vkInstance, &gpuCnt, NULL);
+// 	if (gpuCnt <= 0 || result != VK_SUCCESS)
+// 	{
+// 		std::cout << "Failed to find Gpu Device! res:" << result << std::endl;
+// 		exit(1);
+// 	}
+// 
+// 	m_vkPhyDevices.resize(gpuCnt);
+// 	result = vkEnumeratePhysicalDevices(m_vkInstance, &gpuCnt, m_vkPhyDevices.data());
+// 	if (gpuCnt <= 0 || result != VK_SUCCESS)
+// 	{
+// 		std::cout << "Failed to find Gpu Device! res:" << result << std::endl;
+// 		exit(1);
+// 	}
 
 	VkApplicationInfo appInfo;
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -144,18 +154,34 @@ void ApplicationBase::createVulkanInstance()
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = m_name.c_str();
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = VK_API_VERSION_1_1;
+	appInfo.apiVersion = 0;
+	appInfo.pNext = nullptr;
 
 	VkInstanceCreateInfo instanceInfo;
 	instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	instanceInfo.pApplicationInfo = &appInfo;
 	instanceInfo.enabledExtensionCount = 0;
 
-	VkResult result = vkCreateInstance(&instanceInfo, nullptr, &m_vkInstance);
+	result = vkCreateInstance(&instanceInfo, nullptr, &m_vkInstance);
 	if (result != VK_SUCCESS)
 	{
 		std::cout << "Failed to create instance! res:" << result << std::endl;
 		exit(1);
+	}
+
+	
+
+	 extCnt = 0;
+	// take first physical device;
+	vkEnumerateDeviceExtensionProperties(m_vkPhyDevices[0], nullptr, &extCnt, nullptr);
+
+	std::vector<VkExtensionProperties> extProperties(extCnt);
+	vkEnumerateDeviceExtensionProperties(m_vkPhyDevices[0], nullptr, &extCnt, extProperties.data());
+
+	std::cout << "Support Properties:";
+	for (const auto &extension : extProperties)
+	{
+		std::cout << extension.extensionName << std::endl;
 	}
 }
 

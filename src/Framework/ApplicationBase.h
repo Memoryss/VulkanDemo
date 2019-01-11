@@ -31,6 +31,10 @@ private:
 
 	void destoryVulkanInstance();
 
+	// enbale/disable Vulkan Validation Layer
+// 	void enableValidationLayer();
+// 	void disableValidation
+
 private:
 	// window instance only in Windows! 
 	HINSTANCE m_hInstance{};
@@ -42,7 +46,8 @@ private:
 	std::string m_name{ DEFAULE_WINDOW_NAME };
 
 	// vulkan
-	VkInstance m_vkInstance;
+	VkInstance m_vkInstance;  // every process only have one
+	std::vector<VkPhysicalDevice> m_vkPhyDevices; // gpu devices
 };
 
 #define VULKAN_DEMO_MAIN()															\
@@ -59,6 +64,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)		\
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)					\
 {																					\
 	vulkanDemo = new VulkanApplication();											\
+	vulkanDemo->InitVulkan();														\
 	vulkanDemo->InitWindow(hInstance, WndProc);										\
 	return 0;																		\
 }																					
