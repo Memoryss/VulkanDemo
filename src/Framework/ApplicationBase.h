@@ -35,6 +35,10 @@ private:
 // 	void enableValidationLayer();
 // 	void disableValidation
 
+	void createLogicDevice();
+	void findQueueFamilies();
+	void createSurface();
+
 private:
 	// window instance only in Windows! 
 	HINSTANCE m_hInstance{};
@@ -48,6 +52,13 @@ private:
 	// vulkan
 	VkInstance m_vkInstance;  // every process only have one
 	std::vector<VkPhysicalDevice> m_vkPhyDevices; // gpu devices
+
+	//  temp
+	VkDevice m_vkDevice{};
+	int m_vkQueueFamilyIndex{ INVALID_ID };
+	VkQueue m_vkQueue{};
+
+	VkSurfaceKHR m_vkSurface{};
 };
 
 #define VULKAN_DEMO_MAIN()															\

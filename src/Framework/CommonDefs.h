@@ -9,4 +9,6 @@ const uint32_t DEFAULE_WINDOW_HEIGHT = 600;
 
 const std::string DEFAULE_WINDOW_NAME = "VulkanDemo";
 
+const int INVALID_ID = -1;
+
 #endif

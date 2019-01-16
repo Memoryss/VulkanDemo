@@ -189,3 +189,69 @@ void ApplicationBase::destoryVulkanInstance()
 {
 	vkDestroyInstance(m_vkInstance, nullptr);
 }
+
+void ApplicationBase::createLogicDevice()
+{
+	VkDeviceQueueCreateInfo queueCreateInfo{};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = m_vkQueueFamilyIndex;
+	queueCreateInfo.queueCount = 1;
+
+	float queuePriority = 1.f;
+	queueCreateInfo.pQueuePriorities = &queuePriority;
+	
+	VkDeviceCreateInfo deviceCreateInfo{};
+	deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	deviceCreateInfo.pQueueCreateInfos = &queueCreateInfo;
+	deviceCreateInfo.pEnabledFeatures = VK_FALSE;
+	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+	deviceCreateInfo.enabledExtensionCount = 0;
+	deviceCreateInfo.enabledLayerCount = 0;
+
+	VkResult result = vkCreateDevice(m_vkPhyDevices[0], &deviceCreateInfo, nullptr, &m_vkDevice);
+	if (result != VK_SUCCESS)
+	{
+		std::cout << "create device faild, result:" << result << std::endl;
+		exit(1);
+	}
+
+	vkGetDeviceQueue(m_vkDevice, m_vkQueueFamilyIndex, 0, &m_vkQueue);
+}
+
+void ApplicationBase::findQueueFamilies()
+{
+	uint32_t queueFamilyCnt = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(m_vkPhyDevices[0], &queueFamilyCnt, nullptr);
+	std::vector<VkQueueFamilyProperties> vkQueueFamilies(queueFamilyCnt);
+	vkGetPhysicalDeviceQueueFamilyProperties(m_vkPhyDevices[0], &queueFamilyCnt, vkQueueFamilies.data());
+
+	uint32_t i = 0;
+	for (auto &queueFamily : vkQueueFamilies)
+	{
+		if (queueFamily.queueCount > 0 && queueFamily.queueFlags &VK_QUEUE_GRAPHICS_BIT)
+		{
+			m_vkQueueFamilyIndex = i;
+			if (m_vkQueueFamilyIndex >= 0)
+			{
+				break;
+			}
+		}
+		++i;
+	}
+}
+
+void ApplicationBase::createSurface()
+{
+	VkWin32SurfaceCreateInfoKHR createInfo{};
+	createInfo.hinstance = m_hInstance;
+	createInfo.hwnd = m_hwnd;
+	createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+
+	VkResult result = vkCreateWin32SurfaceKHR(m_vkInstance, &createInfo, NULL, &m_vkSurface);
+	if (result != VK_SUCCESS)
+	{
+		std::cout << "createSuface fail, result:" << result << std::endl;
+		exit(1);
+	}
+}
