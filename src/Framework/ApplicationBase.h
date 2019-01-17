@@ -26,14 +26,23 @@ public:
 	// resize windows size
 	void ResizeWindow(uint32_t width, uint32_t height);
 
+	// enbale/disable Validation Layer
+	void EnableValidationLayer(bool enable);
+
 private:
 	void createVulkanInstance();
 
+	void createVulkanPhysicalDevice();
+
+	void createVulkanExtProperties();
+
 	void destoryVulkanInstance();
 
-	// enbale/disable Vulkan Validation Layer
-// 	void enableValidationLayer();
-// 	void disableValidation
+	bool checkValidationLayerSupport();
+
+	virtual void addExtProperties(const char *propertyName);
+
+	virtual void setPhysicalDevice(uint8_t index);
 
 private:
 	// window instance only in Windows! 
@@ -46,8 +55,16 @@ private:
 	std::string m_name{ DEFAULE_WINDOW_NAME };
 
 	// vulkan
-	VkInstance m_vkInstance;  // every process only have one
+	VkInstance m_vkInstance{ VK_NULL_HANDLE };  // every process only have one
 	std::vector<VkPhysicalDevice> m_vkPhyDevices; // gpu devices
+	uint8_t m_vkPhyDeviceIndex{ 0 };	// gpu devices index;
+	const std::vector<const char *> m_vkValidationLayers{
+		"VK_LAYER_LUNARG_standard_validation"
+	};
+	bool m_vkEnableValidationLayer{ false };
+
+	std::vector<const char *> m_vkEnabledExtProperties;
+	std::vector<VkExtensionProperties> m_vkExtProperties;
 };
 
 #define VULKAN_DEMO_MAIN()															\

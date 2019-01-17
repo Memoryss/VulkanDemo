@@ -89,7 +89,13 @@ bool ApplicationBase::InitWindow(HINSTANCE hInstance, WNDPROC wndProc)
 
 bool ApplicationBase::InitVulkan()
 {
+#ifdef _DEBUG
+	m_vkEnableValidationLayer = true;
+#endif
+
 	createVulkanInstance();
+	createVulkanPhysicalDevice();
+	createVulkanExtProperties();
 	
 	return true;
 }
@@ -126,41 +132,38 @@ void ApplicationBase::ResizeWindow(uint32_t width, uint32_t height)
 
 void ApplicationBase::createVulkanInstance()
 {
-	uint32_t extCnt = 0;
+	// check validation layer
+	if (m_vkEnableValidationLayer && !checkValidationLayerSupport()) {
+		std::cout << "Failed to Support Validation Layer" << std::endl;
+		exit(1);
+	}
+
 	VkResult result;
-	// take first physical device;
-	VkPhysicalDevice temp;
-	vkEnumerateDeviceExtensionProperties(temp, nullptr, &extCnt, nullptr);
-
-// 	uint32_t gpuCnt = 1;
-// 	result = vkEnumeratePhysicalDevices(m_vkInstance, &gpuCnt, NULL);
-// 	if (gpuCnt <= 0 || result != VK_SUCCESS)
-// 	{
-// 		std::cout << "Failed to find Gpu Device! res:" << result << std::endl;
-// 		exit(1);
-// 	}
-// 
-// 	m_vkPhyDevices.resize(gpuCnt);
-// 	result = vkEnumeratePhysicalDevices(m_vkInstance, &gpuCnt, m_vkPhyDevices.data());
-// 	if (gpuCnt <= 0 || result != VK_SUCCESS)
-// 	{
-// 		std::cout << "Failed to find Gpu Device! res:" << result << std::endl;
-// 		exit(1);
-// 	}
-
 	VkApplicationInfo appInfo;
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = m_name.c_str();
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.pEngineName = m_name.c_str();
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.apiVersion = 0;
+	appInfo.apiVersion = VK_API_VERSION_1_1;
 	appInfo.pNext = nullptr;
 
 	VkInstanceCreateInfo instanceInfo;
 	instanceInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	instanceInfo.pApplicationInfo = &appInfo;
-	instanceInfo.enabledExtensionCount = 0;
+	instanceInfo.pNext = NULL;
+	if (m_vkEnableValidationLayer)
+	{
+		instanceInfo.enabledLayerCount = (uint32_t)m_vkValidationLayers.size();
+		instanceInfo.ppEnabledLayerNames = m_vkValidationLayers.data();
+	}
+	else
+	{
+		instanceInfo.enabledLayerCount = 0;
+		instanceInfo.ppEnabledLayerNames = nullptr;
+	}
+	instanceInfo.enabledExtensionCount = (uint32_t)m_vkEnabledExtProperties.size();
+	instanceInfo.ppEnabledExtensionNames = m_vkEnabledExtProperties.data();
 
 	result = vkCreateInstance(&instanceInfo, nullptr, &m_vkInstance);
 	if (result != VK_SUCCESS)
@@ -168,24 +171,82 @@ void ApplicationBase::createVulkanInstance()
 		std::cout << "Failed to create instance! res:" << result << std::endl;
 		exit(1);
 	}
+}
 
-	
-
-	 extCnt = 0;
-	// take first physical device;
-	vkEnumerateDeviceExtensionProperties(m_vkPhyDevices[0], nullptr, &extCnt, nullptr);
-
-	std::vector<VkExtensionProperties> extProperties(extCnt);
-	vkEnumerateDeviceExtensionProperties(m_vkPhyDevices[0], nullptr, &extCnt, extProperties.data());
-
-	std::cout << "Support Properties:";
-	for (const auto &extension : extProperties)
+void ApplicationBase::createVulkanPhysicalDevice()
+{
+	uint32_t gpuCnt = 1;
+	// get gpu count
+	VkResult result = vkEnumeratePhysicalDevices(m_vkInstance, &gpuCnt, NULL);
+	if (gpuCnt <= 0 || result != VK_SUCCESS)
 	{
-		std::cout << extension.extensionName << std::endl;
+		std::cout << "Failed to find Gpu Device! res:" << result << std::endl;
+		exit(1);
 	}
+
+	m_vkPhyDevices.resize(gpuCnt);
+	result = vkEnumeratePhysicalDevices(m_vkInstance, &gpuCnt, m_vkPhyDevices.data());
+	if (gpuCnt <= m_vkPhyDeviceIndex || result != VK_SUCCESS)
+	{
+		std::cout << "Failed to find Gpu Device! res:" << result << std::endl;
+		exit(1);
+	}
+}
+
+void ApplicationBase::createVulkanExtProperties()
+{
+	uint32_t extCnt = 0;
+	// take physical device;
+	vkEnumerateDeviceExtensionProperties(m_vkPhyDevices[m_vkPhyDeviceIndex], nullptr, &extCnt, nullptr);
+
+	m_vkExtProperties.resize(extCnt);
+	vkEnumerateDeviceExtensionProperties(m_vkPhyDevices[m_vkPhyDeviceIndex], nullptr, &extCnt, m_vkExtProperties.data());
 }
 
 void ApplicationBase::destoryVulkanInstance()
 {
 	vkDestroyInstance(m_vkInstance, nullptr);
+}
+
+bool ApplicationBase::checkValidationLayerSupport()
+{
+	uint32_t layerCnt{ 0 };
+	vkEnumerateInstanceLayerProperties(&layerCnt, nullptr);
+
+	std::vector<VkLayerProperties> availableLayers(layerCnt);
+	vkEnumerateInstanceLayerProperties(&layerCnt, availableLayers.data());
+
+	for (const char *layerName : m_vkValidationLayers)
+	{
+		bool layerFound = false;
+		for (const auto &layerProperties : availableLayers)
+		{
+			if (strcmp(layerName, layerProperties.layerName) != 0) {
+				layerFound = true;
+				break;
+			}
+		}
+
+		if (!layerFound)
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+void ApplicationBase::EnableValidationLayer(bool enable)
+{
+	m_vkEnableValidationLayer = enable;
+}
+
+void ApplicationBase::addExtProperties(const char *propertyName)
+{
+	m_vkEnabledExtProperties.push_back(propertyName);
+}
+
+void ApplicationBase::setPhysicalDevice(uint8_t index)
+{
+	m_vkPhyDeviceIndex = index;
 }
